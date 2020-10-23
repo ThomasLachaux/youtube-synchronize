@@ -5,7 +5,7 @@ const { spawn } = require('child_process');
 
 require('dotenv').config();
 
-const subdirectory = 'videos';
+const subdirectory = 'music';
 
 const youtubeClient = new Youtube(process.env.API_KEY);
 
