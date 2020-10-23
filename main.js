@@ -1,5 +1,6 @@
 const Youtube = require('simple-youtube-api');
 const fs = require('fs');
+const axios = require('axios');
 const https = require('https');
 const { spawn } = require('child_process');
 
@@ -64,7 +65,6 @@ const downloadVideo = (youtubeId, folderName) =>
     await fs.promises.writeFile(filename, JSON.stringify(liveVideos));
   }
 
-  https.get(process.env.HEALTHCHECK_ID).on('error', (err) => {
-    console.log('Ping failed: ' + err);
-  });
-})().catch(console.error);
+  await axios.get(`https://hc-ping.com/${process.env.HEALTHCHECK_ID}`);
+
+})().catch((error) => { throw new Error(error) });
