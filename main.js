@@ -33,6 +33,8 @@ const downloadVideo = (youtubeId, folderName) =>
   });
 
 (async () => {
+  // Tell healthchecks the task has started
+  await axios.get(`https://hc-ping.com/${process.env.HEALTHCHECK_ID}/start`);
   const playlistIds = process.env.PLAYLIST_IDS.split(',');
 
   for (const playlistId of playlistIds) {
@@ -65,6 +67,7 @@ const downloadVideo = (youtubeId, folderName) =>
     await fs.promises.writeFile(filename, JSON.stringify(liveVideos));
   }
 
+  // Tell Healthchecks the task has ended
   await axios.get(`https://hc-ping.com/${process.env.HEALTHCHECK_ID}`);
 
 })().catch((error) => { throw new Error(error) });
