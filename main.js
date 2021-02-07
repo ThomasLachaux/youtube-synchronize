@@ -1,31 +1,31 @@
-const Youtube = require('simple-youtube-api');
-const fs = require('fs');
-const axios = require('axios');
-const https = require('https');
-const { spawn } = require('child_process');
+const Youtube = require("simple-youtube-api");
+const fs = require("fs");
+const axios = require("axios");
+const https = require("https");
+const { spawn } = require("child_process");
 
-require('dotenv').config();
+require("dotenv").config();
 
-const subdirectory = 'music';
+const subdirectory = "music";
 
 const youtubeClient = new Youtube(process.env.API_KEY);
 
 const downloadVideo = (youtubeId, folderName) =>
   new Promise((resolve, reject) => {
     console.log(`Downloading ${youtubeId}`);
-    const youtubeDl = spawn('youtube-dl', [
-      '--extract-audio',
-      '--audio-format',
-      'mp3',
-      '-o',
+    const youtubeDl = spawn("youtube-dl", [
+      "--extract-audio",
+      "--audio-format",
+      "mp3",
+      "-o",
       `${subdirectory}/${folderName}/%(title)s.%(ext)s`,
-      youtubeId,
+      `https://youtube.com/watch?v=${youtubeId}`,
     ]);
 
-    youtubeDl.stdout.on('data', (log) => console.log(log.toString()));
-    youtubeDl.stderr.on('data', (log) => console.error(log.toString()));
-    youtubeDl.on('error', (error) => console.error(error));
-    youtubeDl.on('close', (code) => {
+    youtubeDl.stdout.on("data", (log) => console.log(log.toString()));
+    youtubeDl.stderr.on("data", (log) => console.error(log.toString()));
+    youtubeDl.on("error", (error) => console.error(error));
+    youtubeDl.on("close", (code) => {
       if (code === 0) return resolve();
 
       return reject();
@@ -35,7 +35,7 @@ const downloadVideo = (youtubeId, folderName) =>
 (async () => {
   // Tell healthchecks the task has started
   await axios.get(`https://hc-ping.com/${process.env.HEALTHCHECK_ID}/start`);
-  const playlistIds = process.env.PLAYLIST_IDS.split(',');
+  const playlistIds = process.env.PLAYLIST_IDS.split(",");
 
   for (const playlistId of playlistIds) {
     const playlist = await youtubeClient.getPlaylistByID(playlistId);
@@ -69,5 +69,6 @@ const downloadVideo = (youtubeId, folderName) =>
 
   // Tell Healthchecks the task has ended
   await axios.get(`https://hc-ping.com/${process.env.HEALTHCHECK_ID}`);
-
-})().catch((error) => { throw new Error(error) });
+})().catch((error) => {
+  throw new Error(error);
+});
