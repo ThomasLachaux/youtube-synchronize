@@ -70,5 +70,6 @@ const downloadVideo = (youtubeId, folderName) =>
   // Tell Healthchecks the task has ended
   await axios.get(`https://hc-ping.com/${process.env.HEALTHCHECK_ID}`);
 })().catch((error) => {
-  throw new Error(error);
+  console.error(error);
+  process.exit(1);
 });
