@@ -13,7 +13,7 @@
     "winston": "^3.3.3"
   },
   "scripts": {
-    "download": "ts-node src/download.ts"
+    "start": "ts-node src/download.ts"
   },
   "devDependencies": {
     "ts-node-dev": "^1.1.6"

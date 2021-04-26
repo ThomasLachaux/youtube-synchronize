@@ -9,5 +9,5 @@ You need to have already installed `youtube-dl` and `ffmpeg`.
 # Clone the repo
 yarn
 cp .env.example .env # fill the variables
-yarn download
+yarn start
 ```
