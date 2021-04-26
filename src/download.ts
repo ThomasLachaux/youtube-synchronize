@@ -3,11 +3,14 @@ import config from './utils/config';
 import { spawn } from 'child_process';
 import { getPlaylistSlug, getVideosByPlaylist } from './utils/youtubeApi';
 import {
+  listStoredMusics,
   loadFileIndex,
   logger,
   notifyHealthchecks,
+  renameMusic,
   saveFileIndex,
 } from './utils/helpers';
+import fs from 'fs';
 
 const downloadVideo = (youtubeId: string, folderName: string) =>
   new Promise((resolve, reject) => {
@@ -38,19 +41,48 @@ const downloadVideo = (youtubeId: string, folderName: string) =>
   for (const playlistId of config.youtube.playlists.split(',')) {
     // Fetch the playlist from the Youtube API
     const playlistSlug = await getPlaylistSlug(playlistId);
-    const playlistItems = await getVideosByPlaylist(playlistId);
-    const liveIds = playlistItems.map((item) => item.id);
-    const storedIds = await loadFileIndex(playlistSlug);
+
+    const liveItems = await getVideosByPlaylist(playlistId);
+    const liveIds = liveItems.map((item) => item.id);
+
+    const storedItems = await loadFileIndex(playlistSlug);
+    const storedIds = storedItems.map((item) => item.id);
 
     const newVideos = liveIds.filter((id) => !storedIds.includes(id));
 
     logger.info(`${newVideos.length} new videos to download`);
 
-    for (const video of newVideos) {
-      await downloadVideo(video, playlistSlug);
+    // for (const video of newVideos) {
+    //   await downloadVideo(video, playlistSlug);
+    // }
+
+    // Checks if the title hasn't changed
+    for (const liveItem of liveItems) {
+      const storedItem = storedItems.find(
+        (findItem) => findItem.id === liveItem.id
+      );
+
+      // Checks that the music exists and has been downloaded
+      if (!storedItem)
+        throw new Error(`${liveItem.title} was not found on disk`);
+
+      // If the title has changed, rename it on the disk
+      if (storedItem.title !== liveItem.title)
+        await renameMusic(playlistSlug, storedItem.title, liveItem.title);
     }
 
-    await saveFileIndex(playlistSlug, liveIds);
+    await saveFileIndex(playlistSlug, liveItems);
+
+    const storedMusics = await listStoredMusics(playlistSlug);
+    const deletedMusics = storedMusics.filter(
+      (storedMusic) =>
+        !liveItems.some((liveItem) => liveItem.title === storedMusic)
+    );
+
+    logger.warn(
+      `${deletedMusics} musics were removed on the playlist but are still on disk`
+    );
+    deletedMusics.forEach((music) => logger.warn(music));
   }
 
   await notifyHealthchecks('finished');

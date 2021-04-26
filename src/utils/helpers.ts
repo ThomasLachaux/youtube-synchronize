@@ -23,7 +23,9 @@ export const youtubeApi = axios.create({
 
 const getIndexPath = (slug: string) => `${config.musicDirectory}/${slug}.json`;
 
-export const loadFileIndex = async (slug: string): Promise<string[]> => {
+export const loadFileIndex = async (
+  slug: string
+): Promise<{ title: string; id: string }[]> => {
   logger.info(`Load ${slug} playlist`);
 
   const path = getIndexPath(slug);
@@ -37,7 +39,10 @@ export const loadFileIndex = async (slug: string): Promise<string[]> => {
   return [];
 };
 
-export const saveFileIndex = async (slug: string, ids: string[]) => {
+export const saveFileIndex = async (
+  slug: string,
+  ids: { title: string; id: string }[]
+) => {
   const path = getIndexPath(slug);
   logger.verbose(`Save ${path} index`);
   await fs.promises.writeFile(path, JSON.stringify(ids, null, 2));
@@ -53,4 +58,19 @@ export const notifyHealthchecks = async (status: 'started' | 'finished') => {
   } else {
     logger.warn('Skipping healthchecks');
   }
+};
+
+export const listStoredMusics = async (slug: string) => {
+  const musics = await fs.promises.readdir(`${config.musicDirectory}/${slug}`);
+
+  // Remove the .mp3 at the end for each music
+  return musics.map((music) => music.replace(/\.mp3$/, ''));
+};
+
+export const renameMusic = (slug: string, oldName: string, newName: string) => {
+  logger.info(`[${slug}] Rename ${oldName} to ${newName}`);
+  return fs.promises.rename(
+    `${config.musicDirectory}/slug/${oldName}.mp3`,
+    `${config.musicDirectory}/slug/${newName}.mp3`
+  );
 };
