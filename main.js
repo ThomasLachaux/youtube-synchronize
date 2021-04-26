@@ -1,7 +1,6 @@
 const Youtube = require("simple-youtube-api");
 const fs = require("fs");
 const axios = require("axios");
-const https = require("https");
 const { spawn } = require("child_process");
 
 require("dotenv").config();
@@ -43,7 +42,7 @@ const downloadVideo = (youtubeId, folderName) =>
     console.log(`Playlist ${playlist.title}`);
 
     const slug = playlist.title.toLowerCase();
-    const filename = `${subdirectory}/${slug}.txt`;
+    const filename = `${subdirectory}/${slug}.json`;
 
     let fileVideos = null;
     if (fs.existsSync(filename)) {
