@@ -52,9 +52,9 @@ const downloadVideo = (youtubeId: string, folderName: string) =>
 
     logger.info(`${newVideos.length} new videos to download`);
 
-    // for (const video of newVideos) {
-    //   await downloadVideo(video, playlistSlug);
-    // }
+    for (const video of newVideos) {
+      await downloadVideo(video, playlistSlug);
+    }
 
     // Checks if the title hasn't changed
     for (const liveItem of liveItems) {
