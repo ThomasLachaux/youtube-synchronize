@@ -66,14 +66,6 @@ const downloadVideo = (youtubeId: string, folderName: string) =>
     }
 
     await saveFileIndex(playlistSlug, liveItems);
-
-    const storedMusics = await listStoredMusics(playlistSlug);
-    const deletedMusics = storedMusics.filter(
-      (storedMusic) => !liveItems.some((liveItem) => liveItem.title === storedMusic)
-    );
-
-    logger.warn(`${deletedMusics.length} musics were removed on the playlist but are still on disk`);
-    deletedMusics.forEach((music) => logger.warn('Removed', music));
   }
 
   await notifyHealthchecks('finished');
