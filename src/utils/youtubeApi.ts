@@ -1,18 +1,37 @@
 import axios from 'axios';
 import config from './config';
-import { youtubeApi } from './helpers';
+import { logger, youtubeApi } from './helpers';
 
-interface ApiResponse<T> {
+interface ApiEntity {
   kind: string;
   etag: string;
+}
+
+interface ApiResponse<T> extends ApiEntity {
   nextPageToken?: string;
   prevPageToken?: string;
   items: T[];
+  pageInfo: {
+    totalResults: number;
+    resultsPerPage: number;
+  };
 }
 
-interface Playlist {
-  kind: string;
-  etag: string;
+interface Video extends ApiEntity {
+  id: string;
+  contentDetails: {
+    duration: string;
+    dimension: string;
+    definition: string;
+    caption: string;
+    licensedContent: string;
+    regionRestriction?: {
+      blocked?: string[];
+    };
+  };
+}
+
+interface Playlist extends ApiEntity {
   id: string;
   snippet: {
     publishedAt: string;
@@ -23,9 +42,7 @@ interface Playlist {
   };
 }
 
-interface PlaylistItem {
-  kind: string;
-  etag: string;
+interface PlaylistItem extends ApiEntity {
   id: string;
   snippet: {
     publishedAt: string;
@@ -38,14 +55,13 @@ interface PlaylistItem {
       videoId: string;
     };
   };
-  pageInfo: {
-    totalResults: number;
-    resultsPerPage: number;
+  status: {
+    privacyStatus: string;
   };
 }
 
 export const getPlaylistSlug = async (playlistId: string) => {
-  const { data } = await youtubeApi.get<ApiResponse<Playlist>>('playlists', {
+  const response = await youtubeApi.get<ApiResponse<Playlist>>('playlists', {
     params: {
       part: 'snippet',
       id: playlistId,
@@ -53,38 +69,85 @@ export const getPlaylistSlug = async (playlistId: string) => {
     },
   });
 
+  const { data } = response;
+  console.log(response);
+  console.log(playlistId);
+
   return data.items[0].snippet.title.toLowerCase().replace(/ +/, '-');
+};
+
+export const getVideosById = async (videoIds: String[]) => {
+  const { data } = await youtubeApi.get<ApiResponse<Video>>('videos', {
+    params: {
+      part: 'contentDetails',
+      maxResults: 50,
+      id: videoIds.join(','),
+      key: config.youtube.apiKey,
+    },
+  });
+
+  return data.items;
 };
 
 export const getVideosByPlaylist = async (
   playlistId: string,
   nextPageToken?: string
 ): Promise<{ id: string; title: string }[]> => {
-  const { data } = await youtubeApi.get<ApiResponse<PlaylistItem>>(
-    'playlistItems',
-    {
-      params: {
-        part: 'snippet',
-        maxResults: 50,
-        pageToken: nextPageToken,
-        playlistId,
-        key: config.youtube.apiKey,
-      },
-    }
-  );
+  const { data } = await youtubeApi.get<ApiResponse<PlaylistItem>>('playlistItems', {
+    params: {
+      part: 'snippet,status',
+      maxResults: 50,
+      pageToken: nextPageToken,
+      playlistId,
+      key: config.youtube.apiKey,
+    },
+  });
 
-  // Get an array of videos ids
-  const simplifiedData = data.items.map((item) => ({
-    id: item.snippet.resourceId.videoId,
-    title: item.snippet.title,
-  }));
+  // Get an array of videos ids and remove private videos
+  const filteredData = data.items.filter((item) => {
+    if (['private', 'privacyStatusUnspecified'].includes(item.status.privacyStatus)) {
+      logger.warn(`[${item.snippet.resourceId.videoId}] This video is now private`);
+      return false;
+    }
+
+    return true;
+  });
+
+  // Retreive the video details
+  const detailedVideos = await getVideosById(filteredData.map((item) => item.snippet.resourceId.videoId));
+
+  if (detailedVideos.length !== filteredData.length)
+    throw new Error(
+      `The detailed videos length is different from the playlist length (${detailedVideos.length} vs ${filteredData.length})`
+    );
+
+  // Simplifies the data and remove the blocked videos by country
+  const simplifiedData = filteredData.reduce((accumulator, item) => {
+    // Retreive the detailed video mapping the video id
+    const detailedVideo = detailedVideos.find((video) => video.id === item.snippet.resourceId.videoId);
+
+    // Check if the video is not blocked, if so, skips the video
+    if (
+      detailedVideo.contentDetails.regionRestriction &&
+      detailedVideo.contentDetails.regionRestriction.blocked &&
+      detailedVideo.contentDetails.regionRestriction.blocked.includes(config.currentCountry)
+    ) {
+      logger.warn(`[${detailedVideo.id}] ${item.snippet.title} is not available anymore in ${config.currentCountry}`);
+      return accumulator;
+    }
+
+    return [
+      ...accumulator,
+      {
+        id: detailedVideo.id,
+        title: item.snippet.title,
+      },
+    ];
+  }, []);
 
   // If we didn't reach the last page fetch the next video playlist
   if (data.nextPageToken) {
-    const nextPageIds = await getVideosByPlaylist(
-      playlistId,
-      data.nextPageToken
-    );
+    const nextPageIds = await getVideosByPlaylist(playlistId, data.nextPageToken);
     return simplifiedData.concat(nextPageIds);
   }
 

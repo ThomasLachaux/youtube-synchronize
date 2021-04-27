@@ -57,17 +57,11 @@ const downloadVideo = (youtubeId: string, folderName: string) =>
     }
 
     // Checks if the title hasn't changed
-    for (const liveItem of liveItems) {
-      const storedItem = storedItems.find(
-        (findItem) => findItem.id === liveItem.id
-      );
-
-      // Checks that the music exists and has been downloaded
-      if (!storedItem)
-        throw new Error(`${liveItem.title} was not found on disk`);
+    for (const storedItem of storedItems) {
+      const liveItem = liveItems.find((findItem) => findItem.id === storedItem.id);
 
       // If the title has changed, rename it on the disk
-      if (storedItem.title !== liveItem.title)
+      if (liveItem && liveItem.title !== storedItem.title)
         await renameMusic(playlistSlug, storedItem.title, liveItem.title);
     }
 
@@ -75,18 +69,16 @@ const downloadVideo = (youtubeId: string, folderName: string) =>
 
     const storedMusics = await listStoredMusics(playlistSlug);
     const deletedMusics = storedMusics.filter(
-      (storedMusic) =>
-        !liveItems.some((liveItem) => liveItem.title === storedMusic)
+      (storedMusic) => !liveItems.some((liveItem) => liveItem.title === storedMusic)
     );
 
-    logger.warn(
-      `${deletedMusics} musics were removed on the playlist but are still on disk`
-    );
-    deletedMusics.forEach((music) => logger.warn(music));
+    logger.warn(`${deletedMusics.length} musics were removed on the playlist but are still on disk`);
+    deletedMusics.forEach((music) => logger.warn('Removed', music));
   }
 
   await notifyHealthchecks('finished');
-})().catch((error) => {
+})().catch(async (error) => {
   console.error(error);
+  await notifyHealthchecks('fail');
   process.exit(1);
 });

@@ -13,6 +13,7 @@ const config = {
     apiKey: process.env.YOUTUBE_API_KEY,
     playlists: process.env.YOUTUBE_PLAYLISTS,
   },
+  currentCountry: process.env.CURRENT_COUNTRY,
 };
 
 /**
