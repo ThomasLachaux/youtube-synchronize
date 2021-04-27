@@ -1,6 +1,7 @@
 import axios from 'axios';
 import config from './utils/config';
 import { spawn } from 'child_process';
+import recursive from 'recursive-readdir';
 import { getPlaylistSlug, getVideosByPlaylist } from './utils/youtubeApi';
 import {
   listStoredMusics,
@@ -66,6 +67,30 @@ const downloadVideo = (youtubeId: string, folderName: string) =>
     }
 
     await saveFileIndex(playlistSlug, liveItems);
+
+    // Checks if there are any duplicates
+    const duplicates = liveItems.filter((item, index) => liveItems.indexOf(item) !== index);
+    if (duplicates.length > 0) {
+      logger.warn(`Duplicate musics exists in the playlist !`);
+      duplicates.forEach((item) => logger.warn(`[Duplicate] ${item.title}`));
+    }
+  }
+
+  const files = await recursive(config.musicDirectory);
+  const musics = files.reduce((previous, current) => {
+    const match = current.match(/[^/]+\.mp3$/);
+
+    if (match) {
+      return [...previous, match[0]];
+    }
+
+    return previous;
+  }, []);
+
+  const duplicates = musics.filter((item, index) => musics.indexOf(item) !== index);
+  if (duplicates.length > 0) {
+    logger.warn(`Duplicate musics exists between playlists !`);
+    duplicates.forEach((item) => logger.warn(`[Duplicate] ${item}`));
   }
 
   await notifyHealthchecks('finished');

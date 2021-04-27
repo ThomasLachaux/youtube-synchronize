@@ -6,6 +6,7 @@ import { getPlaylistSlug } from './youtubeApi';
 import config from './config';
 
 export const logger = winston.createLogger({
+  level: 'silly',
   transports: [new winston.transports.Console()],
   format: winston.format.combine(
     winston.format.errors({ stack: true }),
