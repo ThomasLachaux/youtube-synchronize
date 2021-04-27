@@ -42,10 +42,10 @@ export const saveFileIndex = async (slug: string, ids: { title: string; id: stri
 };
 
 export const notifyHealthchecks = async (status: 'start' | 'finished' | 'fail') => {
-  const suffix = status === 'finished' ? '' : status;
+  const suffix = status === 'finished' ? '' : `/${status}`;
 
   if (config.healthcheck.enabled) {
-    await axios.get(`${config.healthcheck.url}/${config.healthcheck.id}/${suffix}`);
+    await axios.get(`${config.healthcheck.url}/${config.healthcheck.id}${suffix}`);
   } else {
     logger.warn('Skipping healthchecks');
   }
