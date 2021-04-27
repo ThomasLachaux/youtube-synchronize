@@ -36,7 +36,7 @@ const downloadVideo = (youtubeId: string, folderName: string) =>
   });
 
 (async () => {
-  await notifyHealthchecks('started');
+  await notifyHealthchecks('start');
 
   // Foreach playlists
   for (const playlistId of config.youtube.playlists.split(',')) {

@@ -41,7 +41,7 @@ export const saveFileIndex = async (slug: string, ids: { title: string; id: stri
   await fs.promises.writeFile(path, JSON.stringify(ids, null, 2));
 };
 
-export const notifyHealthchecks = async (status: 'started' | 'finished' | 'fail') => {
+export const notifyHealthchecks = async (status: 'start' | 'finished' | 'fail') => {
   const suffix = status === 'finished' ? '' : status;
 
   if (config.healthcheck.enabled) {
