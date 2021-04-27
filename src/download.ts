@@ -14,7 +14,7 @@ import fs from 'fs';
 
 const downloadVideo = (youtubeId: string, folderName: string) =>
   new Promise((resolve, reject) => {
-    console.log(`Downloading ${youtubeId}`);
+    logger.verbose(`Downloading ${youtubeId}`);
     const youtubeDl = spawn('youtube-dl', [
       '--extract-audio',
       '--audio-format',
@@ -24,9 +24,9 @@ const downloadVideo = (youtubeId: string, folderName: string) =>
       `https://youtube.com/watch?v=${youtubeId}`,
     ]);
 
-    youtubeDl.stdout.on('data', (log) => console.log(log.toString()));
-    youtubeDl.stderr.on('data', (log) => console.error(log.toString()));
-    youtubeDl.on('error', (error) => console.error(error));
+    youtubeDl.stdout.on('data', (log) => logger.verbose(log.toString()));
+    youtubeDl.stderr.on('data', (log) => logger.error(log.toString()));
+    youtubeDl.on('error', (error) => logger.error(error));
     youtubeDl.on('close', (code) => {
       if (code === 0) return resolve(undefined);
 

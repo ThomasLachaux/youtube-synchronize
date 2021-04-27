@@ -61,17 +61,13 @@ interface PlaylistItem extends ApiEntity {
 }
 
 export const getPlaylistSlug = async (playlistId: string) => {
-  const response = await youtubeApi.get<ApiResponse<Playlist>>('playlists', {
+  const { data } = await youtubeApi.get<ApiResponse<Playlist>>('playlists', {
     params: {
       part: 'snippet',
       id: playlistId,
       key: config.youtube.apiKey,
     },
   });
-
-  const { data } = response;
-  console.log(response);
-  console.log(playlistId);
 
   return data.items[0].snippet.title.toLowerCase().replace(/ +/, '-');
 };
