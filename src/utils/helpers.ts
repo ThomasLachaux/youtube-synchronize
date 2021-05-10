@@ -57,11 +57,3 @@ export const listStoredMusics = async (slug: string) => {
   // Remove the .mp3 at the end for each music
   return musics.filter((music) => music.endsWith('.mp3')).map((music) => music.replace(/\.mp3$/, ''));
 };
-
-export const renameMusic = (slug: string, oldName: string, newName: string) => {
-  logger.info(`[${slug}] Rename ${oldName} to ${newName}`);
-  return fs.promises.rename(
-    `${config.musicDirectory}/${slug}/${oldName}.mp3`,
-    `${config.musicDirectory}/${slug}/${newName}.mp3`
-  );
-};

@@ -3,14 +3,7 @@ import config from './utils/config';
 import { spawn } from 'child_process';
 import recursive from 'recursive-readdir';
 import { getPlaylistSlug, getVideosByPlaylist } from './utils/youtubeApi';
-import {
-  listStoredMusics,
-  loadFileIndex,
-  logger,
-  notifyHealthchecks,
-  renameMusic,
-  saveFileIndex,
-} from './utils/helpers';
+import { listStoredMusics, loadFileIndex, logger, notifyHealthchecks, saveFileIndex } from './utils/helpers';
 import fs from 'fs';
 
 const downloadVideo = (youtubeId: string, folderName: string) =>
@@ -63,7 +56,7 @@ const downloadVideo = (youtubeId: string, folderName: string) =>
 
       // If the title has changed, rename it on the disk
       if (liveItem && liveItem.title !== storedItem.title)
-        await renameMusic(playlistSlug, storedItem.title, liveItem.title);
+        logger.warn(`You should rename ${storedItem.title} to ${liveItem.title}`);
     }
 
     await saveFileIndex(playlistSlug, liveItems);
