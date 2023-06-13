@@ -9,7 +9,7 @@ import fs from 'fs';
 const downloadVideo = (youtubeId: string, folderName: string) =>
   new Promise((resolve, reject) => {
     logger.verbose(`Downloading ${youtubeId}`);
-    const youtubeDl = spawn('youtube-dl', [
+    const youtubeDl = spawn('yt-dlp', [
       '--extract-audio',
       '--audio-format',
       'mp3',
